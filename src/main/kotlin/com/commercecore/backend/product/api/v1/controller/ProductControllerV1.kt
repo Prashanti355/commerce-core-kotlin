@@ -8,6 +8,7 @@ import com.commercecore.backend.shared.util.ResponseUtil
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
+import java.math.BigDecimal
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -16,16 +17,34 @@ class ProductControllerV1(
 ) {
 
     @GetMapping
-    fun getAll() = ResponseUtil.success(
+    fun getAll(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "10") size: Int,
+        @RequestParam(defaultValue = "id") sortBy: String,
+        @RequestParam(defaultValue = "asc") sortDir: String,
+        @RequestParam(required = false) name: String?,
+        @RequestParam(required = false) active: Boolean?,
+        @RequestParam(required = false) minPrice: BigDecimal?,
+        @RequestParam(required = false) maxPrice: BigDecimal?
+    ) = ResponseUtil.success(
         message = "Lista de productos",
-        data = productService.getAllProducts()
+        data = productService.getAllProducts(page, size, sortBy, sortDir, name, active, minPrice, maxPrice)
     )
 
     @GetMapping("/deleted")
     @SecurityRequirement(name = "bearerAuth")
-    fun getDeleted() = ResponseUtil.success(
+    fun getDeleted(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "10") size: Int,
+        @RequestParam(defaultValue = "id") sortBy: String,
+        @RequestParam(defaultValue = "asc") sortDir: String,
+        @RequestParam(required = false) name: String?,
+        @RequestParam(required = false) active: Boolean?,
+        @RequestParam(required = false) minPrice: BigDecimal?,
+        @RequestParam(required = false) maxPrice: BigDecimal?
+    ) = ResponseUtil.success(
         message = "Lista de productos eliminados",
-        data = productService.getDeletedProducts()
+        data = productService.getDeletedProducts(page, size, sortBy, sortDir, name, active, minPrice, maxPrice)
     )
 
     @GetMapping("/{id}")

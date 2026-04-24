@@ -12,7 +12,13 @@ import com.commercecore.backend.product.exception.ProductDeletedException
 import com.commercecore.backend.product.exception.ProductNotDeletedException
 import com.commercecore.backend.product.exception.ProductNotFoundException
 import com.commercecore.backend.product.repository.ProductRepository
+import com.commercecore.backend.product.repository.specification.ProductSpecifications
+import com.commercecore.backend.shared.dto.PageResponseDto
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 @Service
@@ -20,12 +26,48 @@ class ProductServiceImpl(
     private val productRepository: ProductRepository
 ) : ProductService {
 
-    override fun getAllProducts(): List<ProductResponseV1Dto> {
-        return productRepository.findAllByDeletedFalse().map(ProductMapperV1::toResponseDto)
+    override fun getAllProducts(
+        page: Int,
+        size: Int,
+        sortBy: String,
+        sortDir: String,
+        name: String?,
+        active: Boolean?,
+        minPrice: BigDecimal?,
+        maxPrice: BigDecimal?
+    ): PageResponseDto<ProductResponseV1Dto> {
+        val resolvedSortBy = resolveSortBy(sortBy)
+        val resolvedSortDir = resolveSortDir(sortDir)
+        val pageable = buildPageable(page, size, resolvedSortBy, resolvedSortDir)
+
+        val productPage = productRepository.findAll(
+            ProductSpecifications.publicFilters(name, active, minPrice, maxPrice),
+            pageable
+        )
+
+        return toPageResponse(productPage, resolvedSortBy, resolvedSortDir)
     }
 
-    override fun getDeletedProducts(): List<ProductResponseV1Dto> {
-        return productRepository.findAllByDeletedTrue().map(ProductMapperV1::toResponseDto)
+    override fun getDeletedProducts(
+        page: Int,
+        size: Int,
+        sortBy: String,
+        sortDir: String,
+        name: String?,
+        active: Boolean?,
+        minPrice: BigDecimal?,
+        maxPrice: BigDecimal?
+    ): PageResponseDto<ProductResponseV1Dto> {
+        val resolvedSortBy = resolveSortBy(sortBy)
+        val resolvedSortDir = resolveSortDir(sortDir)
+        val pageable = buildPageable(page, size, resolvedSortBy, resolvedSortDir)
+
+        val productPage = productRepository.findAll(
+            ProductSpecifications.deletedFilters(name, active, minPrice, maxPrice),
+            pageable
+        )
+
+        return toPageResponse(productPage, resolvedSortBy, resolvedSortDir)
     }
 
     override fun getProductById(id: Long): ProductResponseV1Dto {
@@ -167,5 +209,57 @@ class ProductServiceImpl(
         if (skuOwner.isPresent && skuOwner.get().id != currentProductId) {
             throw ProductConflictException()
         }
+    }
+
+    private fun buildPageable(
+        page: Int,
+        size: Int,
+        sortBy: String,
+        sortDir: Sort.Direction
+    ): PageRequest {
+        val sanitizedPage = if (page < 0) 0 else page
+        val sanitizedSize = when {
+            size < 1 -> 10
+            size > 100 -> 100
+            else -> size
+        }
+
+        return PageRequest.of(
+            sanitizedPage,
+            sanitizedSize,
+            Sort.by(sortDir, sortBy)
+        )
+    }
+
+    private fun resolveSortBy(sortBy: String): String {
+        return when (sortBy) {
+            "id", "name", "price", "stock", "createdAt", "updatedAt" -> sortBy
+            else -> "id"
+        }
+    }
+
+    private fun resolveSortDir(sortDir: String): Sort.Direction {
+        return if (sortDir.equals("desc", ignoreCase = true)) {
+            Sort.Direction.DESC
+        } else {
+            Sort.Direction.ASC
+        }
+    }
+
+    private fun toPageResponse(
+        productPage: Page<Product>,
+        sortBy: String,
+        sortDir: Sort.Direction
+    ): PageResponseDto<ProductResponseV1Dto> {
+        return PageResponseDto(
+            content = productPage.content.map(ProductMapperV1::toResponseDto),
+            page = productPage.number,
+            size = productPage.size,
+            totalElements = productPage.totalElements,
+            totalPages = productPage.totalPages,
+            last = productPage.isLast,
+            sortBy = sortBy,
+            sortDir = sortDir.name.lowercase()
+        )
     }
 }

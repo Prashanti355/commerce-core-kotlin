@@ -44,11 +44,11 @@ class SecurityConfig(
                 it.requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/api/v1/users/ping").permitAll()
 
+                it.requestMatchers(HttpMethod.GET, "/api/v1/products/deleted").authenticated()
+
                 it.requestMatchers(HttpMethod.GET, "/api/v1/products").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/api/v1/products/search").permitAll()
                 it.requestMatchers(HttpMethod.GET, "/api/v1/products/*").permitAll()
-
-                it.requestMatchers("/api/v1/products/deleted").authenticated()
 
                 it.anyRequest().authenticated()
             }
