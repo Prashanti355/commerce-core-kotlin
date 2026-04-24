@@ -36,12 +36,19 @@ class SecurityConfig(
                 it.requestMatchers(
                     "/swagger-ui.html",
                     "/swagger-ui/**",
-                    "/api-docs/**",
-                    "/api/v1/auth/**",
-                    "/api/v1/users/ping"
+                    "/api-docs/**"
                 ).permitAll()
 
+                it.requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                it.requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll()
                 it.requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
+                it.requestMatchers(HttpMethod.GET, "/api/v1/users/ping").permitAll()
+
+                it.requestMatchers(HttpMethod.GET, "/api/v1/products").permitAll()
+                it.requestMatchers(HttpMethod.GET, "/api/v1/products/search").permitAll()
+                it.requestMatchers(HttpMethod.GET, "/api/v1/products/*").permitAll()
+
+                it.requestMatchers("/api/v1/products/deleted").authenticated()
 
                 it.anyRequest().authenticated()
             }
