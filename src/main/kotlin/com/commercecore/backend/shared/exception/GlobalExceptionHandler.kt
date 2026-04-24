@@ -15,6 +15,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import com.commercecore.backend.user.exception.InvalidPatchRequestException
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.AuthenticationException
+import com.commercecore.backend.product.exception.InvalidPatchProductRequestException
+import com.commercecore.backend.product.exception.ProductConflictException
+import com.commercecore.backend.product.exception.ProductDeletedException
+import com.commercecore.backend.product.exception.ProductNotDeletedException
+import com.commercecore.backend.product.exception.ProductNotFoundException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -72,4 +77,24 @@ class GlobalExceptionHandler {
     @ExceptionHandler(AuthenticationException::class)
     fun handleAuthenticationException(ex: AuthenticationException) =
         ResponseUtil.error(HttpStatus.UNAUTHORIZED, ex.message ?: "No autenticado")
+
+    @ExceptionHandler(ProductNotFoundException::class)
+    fun handleProductNotFoundException(ex: ProductNotFoundException) =
+        ResponseUtil.error(HttpStatus.NOT_FOUND, ex.message ?: "Producto no encontrado")
+
+    @ExceptionHandler(InvalidPatchProductRequestException::class)
+    fun handleInvalidPatchProductRequestException(ex: InvalidPatchProductRequestException) =
+        ResponseUtil.error(HttpStatus.BAD_REQUEST, ex.message ?: "Solicitud PATCH de producto inválida")
+
+    @ExceptionHandler(ProductConflictException::class)
+    fun handleProductConflictException(ex: ProductConflictException) =
+        ResponseUtil.error(HttpStatus.CONFLICT, ex.message ?: "Conflicto de datos en el producto")
+
+    @ExceptionHandler(ProductDeletedException::class)
+    fun handleProductDeletedException(ex: ProductDeletedException) =
+        ResponseUtil.error(HttpStatus.BAD_REQUEST, ex.message ?: "Producto ya eliminado")
+
+    @ExceptionHandler(ProductNotDeletedException::class)
+    fun handleProductNotDeletedException(ex: ProductNotDeletedException) =
+        ResponseUtil.error(HttpStatus.BAD_REQUEST, ex.message ?: "Producto no eliminado")
 }
