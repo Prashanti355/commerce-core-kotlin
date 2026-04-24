@@ -12,6 +12,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import com.commercecore.backend.user.exception.InvalidPatchRequestException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -57,4 +58,8 @@ class GlobalExceptionHandler {
             HttpStatus.INTERNAL_SERVER_ERROR,
             ex.message ?: "Error interno del servidor"
         )
+    
+    @ExceptionHandler(InvalidPatchRequestException::class)
+    fun handleInvalidPatchRequestException(ex: InvalidPatchRequestException) =
+        ResponseUtil.error(HttpStatus.BAD_REQUEST, ex.message ?: "Solicitud PATCH inválida")
 }
