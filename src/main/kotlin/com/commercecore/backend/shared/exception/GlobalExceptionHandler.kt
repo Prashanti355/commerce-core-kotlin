@@ -13,6 +13,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import com.commercecore.backend.user.exception.InvalidPatchRequestException
+import org.springframework.security.authentication.BadCredentialsException
+import org.springframework.security.core.AuthenticationException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -62,4 +64,12 @@ class GlobalExceptionHandler {
     @ExceptionHandler(InvalidPatchRequestException::class)
     fun handleInvalidPatchRequestException(ex: InvalidPatchRequestException) =
         ResponseUtil.error(HttpStatus.BAD_REQUEST, ex.message ?: "Solicitud PATCH inválida")
+
+    @ExceptionHandler(BadCredentialsException::class)
+    fun handleBadCredentialsException(ex: BadCredentialsException) =
+        ResponseUtil.error(HttpStatus.UNAUTHORIZED, "Credenciales inválidas")
+
+    @ExceptionHandler(AuthenticationException::class)
+    fun handleAuthenticationException(ex: AuthenticationException) =
+        ResponseUtil.error(HttpStatus.UNAUTHORIZED, ex.message ?: "No autenticado")
 }
