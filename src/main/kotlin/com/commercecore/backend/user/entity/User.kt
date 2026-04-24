@@ -20,6 +20,9 @@ class User(
     @Column(nullable = false, length = 255)
     var password: String,
 
+    @Column(nullable = false, length = 30)
+    var role: String = "ROLE_USER",
+
     @Column(name = "is_active", nullable = false)
     var active: Boolean = true,
 
