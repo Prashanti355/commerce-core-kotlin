@@ -1,16 +1,16 @@
 services:
   db:
     image: postgres:16
-    container_name: commerce_core_db
+    container_name: commerce_core_db_kotlin
     restart: unless-stopped
     environment:
       POSTGRES_DB: commerce_core_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: commerce_user
+      POSTGRES_PASSWORD: commerce_pass
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - commerce_core_postgres_data:/var/lib/postgresql/data
 
 volumes:
-  postgres_data:
+  commerce_core_postgres_data:
