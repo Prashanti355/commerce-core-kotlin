@@ -4,12 +4,32 @@ import com.commercecore.backend.product.api.v1.dto.CreateProductRequestV1Dto
 import com.commercecore.backend.product.api.v1.dto.PatchProductRequestV1Dto
 import com.commercecore.backend.product.api.v1.dto.ProductResponseV1Dto
 import com.commercecore.backend.product.api.v1.dto.UpdateProductRequestV1Dto
+import com.commercecore.backend.shared.dto.PageResponseDto
+import java.math.BigDecimal
 
 interface ProductService {
 
-    fun getAllProducts(): List<ProductResponseV1Dto>
+    fun getAllProducts(
+        page: Int,
+        size: Int,
+        sortBy: String,
+        sortDir: String,
+        name: String?,
+        active: Boolean?,
+        minPrice: BigDecimal?,
+        maxPrice: BigDecimal?
+    ): PageResponseDto<ProductResponseV1Dto>
 
-    fun getDeletedProducts(): List<ProductResponseV1Dto>
+    fun getDeletedProducts(
+        page: Int,
+        size: Int,
+        sortBy: String,
+        sortDir: String,
+        name: String?,
+        active: Boolean?,
+        minPrice: BigDecimal?,
+        maxPrice: BigDecimal?
+    ): PageResponseDto<ProductResponseV1Dto>
 
     fun getProductById(id: Long): ProductResponseV1Dto
 
