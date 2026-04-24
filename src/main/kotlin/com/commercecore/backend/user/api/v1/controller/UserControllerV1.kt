@@ -4,6 +4,7 @@ import com.commercecore.backend.shared.util.ApiPaths
 import com.commercecore.backend.shared.util.ResponseUtil
 import com.commercecore.backend.user.api.v1.dto.ChangePasswordRequestV1Dto
 import com.commercecore.backend.user.api.v1.dto.CreateUserRequestV1Dto
+import com.commercecore.backend.user.api.v1.dto.PatchUserRequestV1Dto
 import com.commercecore.backend.user.api.v1.dto.UpdateUserRequestV1Dto
 import com.commercecore.backend.user.service.UserService
 import jakarta.validation.Valid
@@ -47,6 +48,15 @@ class UserControllerV1(
     ) = ResponseUtil.success(
         message = "Usuario actualizado",
         data = userService.updateUser(id, updateUserRequestV1Dto)
+    )
+
+    @PatchMapping("/{id:\\d+}")
+    fun patch(
+        @PathVariable id: Long,
+        @Valid @RequestBody patchUserRequestV1Dto: PatchUserRequestV1Dto
+    ) = ResponseUtil.success(
+        message = "Usuario actualizado parcialmente",
+        data = userService.patchUser(id, patchUserRequestV1Dto)
     )
 
     @PatchMapping("/{id:\\d+}/password")

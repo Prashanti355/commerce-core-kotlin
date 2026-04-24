@@ -2,11 +2,13 @@ package com.commercecore.backend.user.service
 
 import com.commercecore.backend.user.api.v1.dto.ChangePasswordRequestV1Dto
 import com.commercecore.backend.user.api.v1.dto.CreateUserRequestV1Dto
+import com.commercecore.backend.user.api.v1.dto.PatchUserRequestV1Dto
 import com.commercecore.backend.user.api.v1.dto.UpdateUserRequestV1Dto
 import com.commercecore.backend.user.api.v1.dto.UserResponseV1Dto
 import com.commercecore.backend.user.api.v1.mapper.UserMapperV1
 import com.commercecore.backend.user.entity.User
 import com.commercecore.backend.user.exception.InvalidCurrentPasswordException
+import com.commercecore.backend.user.exception.InvalidPatchRequestException
 import com.commercecore.backend.user.exception.UserConflictException
 import com.commercecore.backend.user.exception.UserDeletedException
 import com.commercecore.backend.user.exception.UserInactiveException
@@ -32,16 +34,12 @@ class UserServiceImpl(
     }
 
     override fun getUserById(id: Long): UserResponseV1Dto {
-        val user = userRepository.findByIdAndDeletedFalse(id)
-            .orElseThrow { UserNotFoundException() }
-
+        val user = getNonDeletedUserOrThrow(id)
         return UserMapperV1.toResponseDto(user)
     }
 
     override fun createUser(createUserRequestV1Dto: CreateUserRequestV1Dto): UserResponseV1Dto {
-        if (userRepository.existsByEmailAndDeletedFalse(createUserRequestV1Dto.email)) {
-            throw UserConflictException()
-        }
+        ensureEmailAvailable(createUserRequestV1Dto.email)
 
         val user = User(
             name = createUserRequestV1Dto.name,
@@ -54,13 +52,9 @@ class UserServiceImpl(
     }
 
     override fun updateUser(id: Long, updateUserRequestV1Dto: UpdateUserRequestV1Dto): UserResponseV1Dto {
-        val user = userRepository.findByIdAndDeletedFalse(id)
-            .orElseThrow { UserNotFoundException() }
+        val user = getNonDeletedUserOrThrow(id)
 
-        val emailOwner = userRepository.findByEmailAndDeletedFalse(updateUserRequestV1Dto.email)
-        if (emailOwner.isPresent && emailOwner.get().id != id) {
-            throw UserConflictException()
-        }
+        ensureEmailAvailable(updateUserRequestV1Dto.email, id)
 
         user.name = updateUserRequestV1Dto.name
         user.email = updateUserRequestV1Dto.email
@@ -69,9 +63,28 @@ class UserServiceImpl(
         return UserMapperV1.toResponseDto(updatedUser)
     }
 
+    override fun patchUser(id: Long, patchUserRequestV1Dto: PatchUserRequestV1Dto): UserResponseV1Dto {
+        val user = getNonDeletedUserOrThrow(id)
+
+        if (patchUserRequestV1Dto.name == null && patchUserRequestV1Dto.email == null) {
+            throw InvalidPatchRequestException()
+        }
+
+        patchUserRequestV1Dto.name?.let {
+            user.name = it
+        }
+
+        patchUserRequestV1Dto.email?.let {
+            ensureEmailAvailable(it, id)
+            user.email = it
+        }
+
+        val updatedUser = userRepository.save(user)
+        return UserMapperV1.toResponseDto(updatedUser)
+    }
+
     override fun changePassword(id: Long, changePasswordRequestV1Dto: ChangePasswordRequestV1Dto): UserResponseV1Dto {
-        val user = userRepository.findByIdAndDeletedFalse(id)
-            .orElseThrow { UserNotFoundException() }
+        val user = getNonDeletedUserOrThrow(id)
 
         if (!passwordEncoder.matches(changePasswordRequestV1Dto.currentPassword, user.password)) {
             throw InvalidCurrentPasswordException()
@@ -84,8 +97,7 @@ class UserServiceImpl(
     }
 
     override fun deactivateUser(id: Long): UserResponseV1Dto {
-        val user = userRepository.findByIdAndDeletedFalse(id)
-            .orElseThrow { UserNotFoundException() }
+        val user = getNonDeletedUserOrThrow(id)
 
         if (!user.active) {
             throw UserInactiveException()
@@ -98,8 +110,7 @@ class UserServiceImpl(
     }
 
     override fun activateUser(id: Long): UserResponseV1Dto {
-        val user = userRepository.findByIdAndDeletedFalse(id)
-            .orElseThrow { UserNotFoundException() }
+        val user = getNonDeletedUserOrThrow(id)
 
         user.active = true
 
@@ -108,8 +119,7 @@ class UserServiceImpl(
     }
 
     override fun deleteUser(id: Long): UserResponseV1Dto {
-        val user = userRepository.findById(id)
-            .orElseThrow { UserNotFoundException() }
+        val user = getUserOrThrow(id)
 
         if (user.deleted) {
             throw UserDeletedException()
@@ -117,32 +127,52 @@ class UserServiceImpl(
 
         user.deleted = true
         user.deletedAt = LocalDateTime.now()
+        user.active = false
 
         val updatedUser = userRepository.save(user)
         return UserMapperV1.toResponseDto(updatedUser)
     }
 
     override fun restoreUser(id: Long): UserResponseV1Dto {
-        val user = userRepository.findById(id)
-            .orElseThrow { UserNotFoundException() }
+        val user = getUserOrThrow(id)
 
         if (!user.deleted) {
             throw UserNotDeletedException()
         }
 
-        val emailOwner = userRepository.findByEmailAndDeletedFalse(user.email)
-        if (emailOwner.isPresent && emailOwner.get().id != id) {
-            throw UserConflictException("No se puede restaurar: ya existe un usuario activo con ese correo")
-        }
+        ensureEmailAvailable(user.email, id)
 
         user.deleted = false
         user.deletedAt = null
+        user.active = false
 
         val updatedUser = userRepository.save(user)
         return UserMapperV1.toResponseDto(updatedUser)
     }
 
-    // Convierte el resultado del encoder a no nulo de forma segura
+    private fun getUserOrThrow(id: Long): User {
+        return userRepository.findById(id)
+            .orElseThrow { UserNotFoundException() }
+    }
+
+    private fun getNonDeletedUserOrThrow(id: Long): User {
+        val user = getUserOrThrow(id)
+
+        if (user.deleted) {
+            throw UserDeletedException("El usuario está eliminado. Restáuralo antes de operar sobre él")
+        }
+
+        return user
+    }
+
+    private fun ensureEmailAvailable(email: String, currentUserId: Long? = null) {
+        val emailOwner = userRepository.findByEmailAndDeletedFalse(email)
+
+        if (emailOwner.isPresent && emailOwner.get().id != currentUserId) {
+            throw UserConflictException("Ya existe un usuario activo con ese correo")
+        }
+    }
+
     private fun encodePassword(rawPassword: String): String {
         return passwordEncoder.encode(rawPassword)
             ?: throw IllegalStateException("No se pudo codificar la contraseña")
