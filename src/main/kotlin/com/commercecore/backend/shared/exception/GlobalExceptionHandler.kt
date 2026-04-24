@@ -1,16 +1,17 @@
 package com.commercecore.backend.shared.exception
 
 import com.commercecore.backend.shared.util.ResponseUtil
+import com.commercecore.backend.user.exception.InvalidCurrentPasswordException
 import com.commercecore.backend.user.exception.UserConflictException
+import com.commercecore.backend.user.exception.UserDeletedException
 import com.commercecore.backend.user.exception.UserInactiveException
+import com.commercecore.backend.user.exception.UserNotDeletedException
 import com.commercecore.backend.user.exception.UserNotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
-import com.commercecore.backend.user.exception.UserDeletedException
-import com.commercecore.backend.user.exception.UserNotDeletedException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -26,6 +27,18 @@ class GlobalExceptionHandler {
     @ExceptionHandler(UserInactiveException::class)
     fun handleUserInactiveException(ex: UserInactiveException) =
         ResponseUtil.error(HttpStatus.BAD_REQUEST, ex.message ?: "Usuario inactivo")
+
+    @ExceptionHandler(UserDeletedException::class)
+    fun handleUserDeletedException(ex: UserDeletedException) =
+        ResponseUtil.error(HttpStatus.BAD_REQUEST, ex.message ?: "Usuario ya eliminado")
+
+    @ExceptionHandler(UserNotDeletedException::class)
+    fun handleUserNotDeletedException(ex: UserNotDeletedException) =
+        ResponseUtil.error(HttpStatus.BAD_REQUEST, ex.message ?: "Usuario no eliminado")
+
+    @ExceptionHandler(InvalidCurrentPasswordException::class)
+    fun handleInvalidCurrentPasswordException(ex: InvalidCurrentPasswordException) =
+        ResponseUtil.error(HttpStatus.BAD_REQUEST, ex.message ?: "La contraseña actual no es correcta")
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidationException(ex: MethodArgumentNotValidException) =
@@ -44,12 +57,4 @@ class GlobalExceptionHandler {
             HttpStatus.INTERNAL_SERVER_ERROR,
             ex.message ?: "Error interno del servidor"
         )
-    
-    @ExceptionHandler(UserDeletedException::class)
-    fun handleUserDeletedException(ex: UserDeletedException) =
-        ResponseUtil.error(HttpStatus.BAD_REQUEST, ex.message ?: "Usuario ya eliminado")
-
-    @ExceptionHandler(UserNotDeletedException::class)
-    fun handleUserNotDeletedException(ex: UserNotDeletedException) =
-        ResponseUtil.error(HttpStatus.BAD_REQUEST, ex.message ?: "Usuario no eliminado")    
 }

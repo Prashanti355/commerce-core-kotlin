@@ -6,7 +6,13 @@ import java.util.Optional
 
 interface UserRepository : JpaRepository<User, Long> {
 
-    fun findByEmail(email: String): Optional<User>
+    fun findByEmailAndDeletedFalse(email: String): Optional<User>
 
-    fun existsByEmail(email: String): Boolean
+    fun existsByEmailAndDeletedFalse(email: String): Boolean
+
+    fun findAllByDeletedFalse(): List<User>
+
+    fun findAllByDeletedTrue(): List<User>
+
+    fun findByIdAndDeletedFalse(id: Long): Optional<User>
 }
