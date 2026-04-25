@@ -1,5 +1,6 @@
 package com.commercecore.backend.auth.service
 
+import com.commercecore.backend.audit.service.AuditLogService
 import com.commercecore.backend.auth.api.v1.dto.AuthMeResponseV1Dto
 import com.commercecore.backend.auth.api.v1.dto.AuthTokensResponseV1Dto
 import com.commercecore.backend.auth.api.v1.dto.LoginRequestV1Dto
@@ -10,7 +11,6 @@ import com.commercecore.backend.user.repository.UserRepository
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 @Service
@@ -19,7 +19,8 @@ class AuthServiceImpl(
     private val userDetailsServiceImpl: UserDetailsServiceImpl,
     private val jwtService: JwtService,
     private val tokenBlacklistService: TokenBlacklistService,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val auditLogService: AuditLogService
 ) : AuthService {
 
     override fun login(loginRequestV1Dto: LoginRequestV1Dto): AuthTokensResponseV1Dto {
@@ -32,6 +33,14 @@ class AuthServiceImpl(
 
         val userDetails = userDetailsServiceImpl
             .loadUserByUsername(loginRequestV1Dto.email) as CustomUserDetails
+
+        auditLogService.log(
+            action = "LOGIN",
+            entityType = "AUTH",
+            entityId = userDetails.id,
+            detail = "Inicio de sesión exitoso",
+            actorEmail = userDetails.email
+        )
 
         return AuthTokensResponseV1Dto(
             accessToken = jwtService.generateAccessToken(userDetails),
@@ -64,6 +73,14 @@ class AuthServiceImpl(
             reason = "refresh"
         )
 
+        auditLogService.log(
+            action = "TOKEN_REFRESH",
+            entityType = "AUTH",
+            entityId = userDetails.id,
+            detail = "Refresh token utilizado correctamente",
+            actorEmail = userDetails.email
+        )
+
         return AuthTokensResponseV1Dto(
             accessToken = jwtService.generateAccessToken(userDetails),
             refreshToken = jwtService.generateRefreshToken(userDetails)
@@ -74,12 +91,21 @@ class AuthServiceImpl(
         val token = bearerToken.removePrefix("Bearer ").trim()
         val claims = jwtService.extractAllClaims(token)
         val userId = (claims["userId"] as Number).toLong()
+        val username = claims.subject
 
         tokenBlacklistService.blacklistToken(
             jti = claims.id,
             userId = userId,
             expiresAt = claims.expiration.toInstant().atZone(ZoneOffset.UTC).toLocalDateTime(),
             reason = "logout"
+        )
+
+        auditLogService.log(
+            action = "LOGOUT",
+            entityType = "AUTH",
+            entityId = userId,
+            detail = "Sesión cerrada correctamente",
+            actorEmail = username
         )
     }
 

@@ -20,11 +20,13 @@ import com.commercecore.backend.user.repository.UserRepository
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
+import com.commercecore.backend.audit.service.AuditLogService
 
 @Service
 class UserServiceImpl(
     private val userRepository: UserRepository,
-    private val passwordEncoder: PasswordEncoder
+    private val passwordEncoder: PasswordEncoder,
+    private val auditLogService: AuditLogService
 ) : UserService {
 
     override fun getAllUsers(): List<UserResponseV1Dto> {
@@ -50,6 +52,12 @@ class UserServiceImpl(
         )
 
         val savedUser = userRepository.save(user)
+        auditLogService.log(
+            action = "USER_CREATE",
+            entityType = "USER",
+            entityId = savedUser.id,
+            detail = "Usuario creado con email ${savedUser.email}"
+        )
         return UserMapperV1.toResponseDto(savedUser)
     }
 
@@ -62,6 +70,12 @@ class UserServiceImpl(
         user.email = updateUserRequestV1Dto.email
 
         val updatedUser = userRepository.save(user)
+        auditLogService.log(
+            action = "USER_UPDATE",
+            entityType = "USER",
+            entityId = updatedUser.id,
+            detail = "Usuario actualizado con email ${updatedUser.email}"
+        )
         return UserMapperV1.toResponseDto(updatedUser)
     }
 
@@ -95,6 +109,12 @@ class UserServiceImpl(
         user.password = encodePassword(changePasswordRequestV1Dto.newPassword)
 
         val updatedUser = userRepository.save(user)
+        auditLogService.log(
+            action = "USER_CHANGE_PASSWORD",
+            entityType = "USER",
+            entityId = updatedUser.id,
+            detail = "Contraseña actualizada"
+        )
         return UserMapperV1.toResponseDto(updatedUser)
     }
 
@@ -142,6 +162,12 @@ class UserServiceImpl(
         user.active = false
 
         val updatedUser = userRepository.save(user)
+        auditLogService.log(
+            action = "USER_DELETE",
+            entityType = "USER",
+            entityId = updatedUser.id,
+            detail = "Usuario eliminado lógicamente"
+        )
         return UserMapperV1.toResponseDto(updatedUser)
     }
 
@@ -159,6 +185,12 @@ class UserServiceImpl(
         user.active = false
 
         val updatedUser = userRepository.save(user)
+        auditLogService.log(
+            action = "USER_RESTORE",
+            entityType = "USER",
+            entityId = updatedUser.id,
+            detail = "Usuario restaurado"
+        )
         return UserMapperV1.toResponseDto(updatedUser)
     }
 
