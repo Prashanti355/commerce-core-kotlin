@@ -20,10 +20,12 @@ import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.LocalDateTime
+import com.commercecore.backend.audit.service.AuditLogService
 
 @Service
 class ProductServiceImpl(
-    private val productRepository: ProductRepository
+    private val productRepository: ProductRepository,
+    private val auditLogService: AuditLogService
 ) : ProductService {
 
     override fun getAllProducts(
@@ -93,6 +95,12 @@ class ProductServiceImpl(
         )
 
         val savedProduct = productRepository.save(product)
+        auditLogService.log(
+            action = "PRODUCT_CREATE",
+            entityType = "PRODUCT",
+            entityId = savedProduct.id,
+            detail = "Producto creado con SKU ${savedProduct.sku}"
+        )
         return ProductMapperV1.toResponseDto(savedProduct)
     }
 
@@ -109,6 +117,12 @@ class ProductServiceImpl(
         product.imageUrl = updateProductRequestV1Dto.imageUrl
 
         val updatedProduct = productRepository.save(product)
+        auditLogService.log(
+            action = "PRODUCT_UPDATE",
+            entityType = "PRODUCT",
+            entityId = updatedProduct.id,
+            detail = "Producto actualizado con SKU ${updatedProduct.sku}"
+        )
         return ProductMapperV1.toResponseDto(updatedProduct)
     }
 
@@ -137,6 +151,12 @@ class ProductServiceImpl(
         patchProductRequestV1Dto.imageUrl?.let { product.imageUrl = it }
 
         val updatedProduct = productRepository.save(product)
+        auditLogService.log(
+            action = "PRODUCT_PATCH",
+            entityType = "PRODUCT",
+            entityId = updatedProduct.id,
+            detail = "Producto actualizado parcialmente con SKU ${updatedProduct.sku}"
+        )
         return ProductMapperV1.toResponseDto(updatedProduct)
     }
 
@@ -168,6 +188,12 @@ class ProductServiceImpl(
         product.active = false
 
         val updatedProduct = productRepository.save(product)
+        auditLogService.log(
+            action = "PRODUCT_DELETE",
+            entityType = "PRODUCT",
+            entityId = updatedProduct.id,
+            detail = "Producto eliminado lógicamente"
+        )
         return ProductMapperV1.toResponseDto(updatedProduct)
     }
 
@@ -185,6 +211,12 @@ class ProductServiceImpl(
         product.active = false
 
         val updatedProduct = productRepository.save(product)
+        auditLogService.log(
+            action = "PRODUCT_RESTORE",
+            entityType = "PRODUCT",
+            entityId = updatedProduct.id,
+            detail = "Producto restaurado"
+        )
         return ProductMapperV1.toResponseDto(updatedProduct)
     }
 
