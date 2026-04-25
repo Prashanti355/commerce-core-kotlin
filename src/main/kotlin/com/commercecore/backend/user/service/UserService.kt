@@ -4,6 +4,7 @@ import com.commercecore.backend.user.api.v1.dto.ChangePasswordRequestV1Dto
 import com.commercecore.backend.user.api.v1.dto.CreateUserRequestV1Dto
 import com.commercecore.backend.user.api.v1.dto.PatchUserRequestV1Dto
 import com.commercecore.backend.user.api.v1.dto.UpdateUserRequestV1Dto
+import com.commercecore.backend.user.api.v1.dto.UpdateUserRoleRequestV1Dto
 import com.commercecore.backend.user.api.v1.dto.UserResponseV1Dto
 
 interface UserService {
@@ -21,6 +22,8 @@ interface UserService {
     fun patchUser(id: Long, patchUserRequestV1Dto: PatchUserRequestV1Dto): UserResponseV1Dto
 
     fun changePassword(id: Long, changePasswordRequestV1Dto: ChangePasswordRequestV1Dto): UserResponseV1Dto
+
+    fun updateUserRole(id: Long, updateUserRoleRequestV1Dto: UpdateUserRoleRequestV1Dto): UserResponseV1Dto
 
     fun deactivateUser(id: Long): UserResponseV1Dto
 

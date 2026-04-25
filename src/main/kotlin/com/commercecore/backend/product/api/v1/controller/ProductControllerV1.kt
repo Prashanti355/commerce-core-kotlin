@@ -7,6 +7,7 @@ import com.commercecore.backend.product.service.ProductService
 import com.commercecore.backend.shared.util.ResponseUtil
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.validation.Valid
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 
@@ -31,8 +32,9 @@ class ProductControllerV1(
         data = productService.getAllProducts(page, size, sortBy, sortDir, name, active, minPrice, maxPrice)
     )
 
-    @GetMapping("/deleted")
+    @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
+    @GetMapping("/deleted")
     fun getDeleted(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "10") size: Int,
@@ -59,16 +61,18 @@ class ProductControllerV1(
         data = productService.searchProducts(name)
     )
 
-    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
+    @PostMapping
     fun create(@Valid @RequestBody createProductRequestV1Dto: CreateProductRequestV1Dto) =
         ResponseUtil.created(
             message = "Producto creado",
             data = productService.createProduct(createProductRequestV1Dto)
         )
 
-    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
+    @PutMapping("/{id}")
     fun update(
         @PathVariable id: Long,
         @Valid @RequestBody updateProductRequestV1Dto: UpdateProductRequestV1Dto
@@ -77,8 +81,9 @@ class ProductControllerV1(
         data = productService.updateProduct(id, updateProductRequestV1Dto)
     )
 
-    @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
+    @PatchMapping("/{id}")
     fun patch(
         @PathVariable id: Long,
         @Valid @RequestBody patchProductRequestV1Dto: PatchProductRequestV1Dto
@@ -87,29 +92,33 @@ class ProductControllerV1(
         data = productService.patchProduct(id, patchProductRequestV1Dto)
     )
 
-    @PatchMapping("/{id}/deactivate")
+    @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
+    @PatchMapping("/{id}/deactivate")
     fun deactivate(@PathVariable id: Long) = ResponseUtil.success(
         message = "Producto desactivado",
         data = productService.deactivateProduct(id)
     )
 
-    @PatchMapping("/{id}/activate")
+    @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
+    @PatchMapping("/{id}/activate")
     fun activate(@PathVariable id: Long) = ResponseUtil.success(
         message = "Producto activado",
         data = productService.activateProduct(id)
     )
 
-    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
+    @DeleteMapping("/{id}")
     fun delete(@PathVariable id: Long) = ResponseUtil.success(
         message = "Producto eliminado lógicamente",
         data = productService.deleteProduct(id)
     )
 
-    @PatchMapping("/{id}/restore")
+    @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
+    @PatchMapping("/{id}/restore")
     fun restore(@PathVariable id: Long) = ResponseUtil.success(
         message = "Producto restaurado",
         data = productService.restoreProduct(id)
