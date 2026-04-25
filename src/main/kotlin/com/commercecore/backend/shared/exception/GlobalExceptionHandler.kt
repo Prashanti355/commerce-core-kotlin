@@ -20,6 +20,7 @@ import com.commercecore.backend.product.exception.ProductConflictException
 import com.commercecore.backend.product.exception.ProductDeletedException
 import com.commercecore.backend.product.exception.ProductNotDeletedException
 import com.commercecore.backend.product.exception.ProductNotFoundException
+import com.commercecore.backend.user.exception.InvalidRoleException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -97,4 +98,8 @@ class GlobalExceptionHandler {
     @ExceptionHandler(ProductNotDeletedException::class)
     fun handleProductNotDeletedException(ex: ProductNotDeletedException) =
         ResponseUtil.error(HttpStatus.BAD_REQUEST, ex.message ?: "Producto no eliminado")
+
+    @ExceptionHandler(InvalidRoleException::class)
+    fun handleInvalidRoleException(ex: InvalidRoleException) =
+        ResponseUtil.error(HttpStatus.BAD_REQUEST, ex.message ?: "Rol inválido")        
 }

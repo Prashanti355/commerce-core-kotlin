@@ -4,11 +4,13 @@ import com.commercecore.backend.user.api.v1.dto.ChangePasswordRequestV1Dto
 import com.commercecore.backend.user.api.v1.dto.CreateUserRequestV1Dto
 import com.commercecore.backend.user.api.v1.dto.PatchUserRequestV1Dto
 import com.commercecore.backend.user.api.v1.dto.UpdateUserRequestV1Dto
+import com.commercecore.backend.user.api.v1.dto.UpdateUserRoleRequestV1Dto
 import com.commercecore.backend.user.api.v1.dto.UserResponseV1Dto
 import com.commercecore.backend.user.api.v1.mapper.UserMapperV1
 import com.commercecore.backend.user.entity.User
 import com.commercecore.backend.user.exception.InvalidCurrentPasswordException
 import com.commercecore.backend.user.exception.InvalidPatchRequestException
+import com.commercecore.backend.user.exception.InvalidRoleException
 import com.commercecore.backend.user.exception.UserConflictException
 import com.commercecore.backend.user.exception.UserDeletedException
 import com.commercecore.backend.user.exception.UserInactiveException
@@ -96,6 +98,16 @@ class UserServiceImpl(
         return UserMapperV1.toResponseDto(updatedUser)
     }
 
+    override fun updateUserRole(id: Long, updateUserRoleRequestV1Dto: UpdateUserRoleRequestV1Dto): UserResponseV1Dto {
+        val user = getNonDeletedUserOrThrow(id)
+        val normalizedRole = normalizeAndValidateRole(updateUserRoleRequestV1Dto.role)
+
+        user.role = normalizedRole
+
+        val updatedUser = userRepository.save(user)
+        return UserMapperV1.toResponseDto(updatedUser)
+    }
+
     override fun deactivateUser(id: Long): UserResponseV1Dto {
         val user = getNonDeletedUserOrThrow(id)
 
@@ -170,6 +182,15 @@ class UserServiceImpl(
 
         if (emailOwner.isPresent && emailOwner.get().id != currentUserId) {
             throw UserConflictException("Ya existe un usuario activo con ese correo")
+        }
+    }
+
+    private fun normalizeAndValidateRole(role: String): String {
+        val normalizedRole = role.trim().uppercase()
+
+        return when (normalizedRole) {
+            "ROLE_USER", "ROLE_ADMIN" -> normalizedRole
+            else -> throw InvalidRoleException()
         }
     }
 
