@@ -20,6 +20,8 @@ import java.math.BigDecimal
 import java.util.UUID
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authorization.AuthorizationDeniedException
+import org.springframework.test.context.ActiveProfiles
+
 @Testcontainers
 @AutoConfigureTestRestTemplate
 @SpringBootTest(
