@@ -21,6 +21,8 @@ import com.commercecore.backend.product.exception.ProductDeletedException
 import com.commercecore.backend.product.exception.ProductNotDeletedException
 import com.commercecore.backend.product.exception.ProductNotFoundException
 import com.commercecore.backend.user.exception.InvalidRoleException
+import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.authorization.AuthorizationDeniedException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -102,4 +104,12 @@ class GlobalExceptionHandler {
     @ExceptionHandler(InvalidRoleException::class)
     fun handleInvalidRoleException(ex: InvalidRoleException) =
         ResponseUtil.error(HttpStatus.BAD_REQUEST, ex.message ?: "Rol inválido")        
+
+    @ExceptionHandler(AuthorizationDeniedException::class)
+    fun handleAuthorizationDeniedException(ex: AuthorizationDeniedException) =
+        ResponseUtil.error(HttpStatus.FORBIDDEN, "No tienes permisos para realizar esta acción")
+
+    @ExceptionHandler(AccessDeniedException::class)
+    fun handleAccessDeniedException(ex: AccessDeniedException) =
+        ResponseUtil.error(HttpStatus.FORBIDDEN, "No tienes permisos para realizar esta acción")        
 }
