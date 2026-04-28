@@ -23,6 +23,7 @@ import com.commercecore.backend.product.exception.ProductNotFoundException
 import com.commercecore.backend.user.exception.InvalidRoleException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authorization.AuthorizationDeniedException
+import com.commercecore.backend.audit.exception.AuditLogNotFoundException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -112,4 +113,8 @@ class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException::class)
     fun handleAccessDeniedException(ex: AccessDeniedException) =
         ResponseUtil.error(HttpStatus.FORBIDDEN, "No tienes permisos para realizar esta acción")        
+
+    @ExceptionHandler(AuditLogNotFoundException::class)
+    fun handleAuditLogNotFoundException(ex: AuditLogNotFoundException) =
+        ResponseUtil.error(HttpStatus.NOT_FOUND, ex.message ?: "Registro de auditoría no encontrado")
 }
